@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+    <head>
+        <meta charset="utf-8">
+        <title>Receipt</title>
+        <script type="text/javascript">
+            function getReceiptAjax() {
+                var xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function() {
+                    if (xhttp.readyState == 4 && xhttp.status == 200) {
+                        processReceipt(xhttp);
+                    }
+                };
+                xhttp.open("GET", "receipt.xml", true);
+                xhttp.send();
+            }
+
+            function processReceipt(xhttp) {
+                var xml = xhttp.responseXML;
+                var receiptObj = parseXML(xml);
+                display(receiptObj);
+            }
+
+            function parseXML(xml) {
+                var receiptElement = xml.getElementsByTagName("receipt")[0];
+                //create a receipt object to hold the information in the xml file
+                var receiptObj = {};
+                receiptObj.customerRef= receiptElement.getAttribute("customerRef");
+                receiptObj.paymentDate= receiptElement.getAttribute("paymentDate");
+                var itemElements = xml.getElementsByTagName("item");
+                //create an array to hold the items
+                receiptObj.itemArray = [];
+                for(var i=0; i< itemElements.length; i++) {
+                    var item = {};
+                    item.productName = itemElements[i].getElementsByTagName("productName")[0].childNodes[0].nodeValue;
+                    item.quantity = Number(itemElements[i].getElementsByTagName("quantity")[0].childNodes[0].nodeValue);
+                    item.unitPrice = Number(itemElements[i].getElementsByTagName("unitPrice")[0].childNodes[0].nodeValue);
+                    receiptObj.itemArray.push(item);
+                }
+              return receiptObj;
+            }
+
+            function display(receiptObj){
+                var totalPrice = 0;
+                var html = "<table border='1'>";
+                html += "<tr><th>Product Name</th><th>Quantity</th><th>Unit Price</th><th>Price</th></tr>";
+                for(var i=0; i<receiptObj.itemArray.length; i++){
+                    var item = receiptObj.itemArray[i];
+                    var price = item.unitPrice * item.quantity;
+                    html += "<tr>";
+                    html += "<td>" + item.productName + "</td>";
+                    html += "<td>" + item.quantity + "</td>";
+                    html += "<td>" + item.unitPrice + "</td>";
+                    html += "<td>" + price + "</td>";
+                    html += "</tr>";
+                    totalPrice += price;
+                }
+                html += "</table>";
+                html += "<br />";
+                html += "<b>Total Price: " + totalPrice + "</b><br /><br /><br />";
+                html += "<i>Customer Reference Number: " + receiptObj.customerRef + "</i> </br />";
+                html += "<i>Payment Date: " + receiptObj.paymentDate + "</i>";
+                var receiptDiv = document.getElementById("receipt");
+                receiptDiv.innerHTML = html;
+    }
+
+        </script>
+    </head>
+    <body>
+        <button onClick="getReceiptAjax()">
+            Click here to view receipt
+        </button>
+        <br> <br>
+
+        <div id="receipt">
+        </div>
+
+    </body>
+</html>
